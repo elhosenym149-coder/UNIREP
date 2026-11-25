@@ -18,7 +18,7 @@ Current modular foundation:
 - Static Python AST import graphing, a read-only Python security-indicator engine (dynamic execution, shell invocation and unsafe deserialization patterns), native PE/ELF/Mach-O header inspection, and a compatibility adapter for the original package analyzer.
 - Early Android companion source plus a GitHub Actions debug-APK build workflow.
 - JSON job reports and a command-line interface.
-- Initial P8 security-analysis slice implemented: suspicious indicators include source location, severity, confidence and false-positive caveats. This is not a malware verdict and performs no remediation. Dependency impact, broader-language coverage, trusted repair, Merge Studio, branding and release installers remain planned.
+- Initial P8 security-analysis slice implemented: Python AST indicators include dynamic execution, shell invocation, unsafe deserialization, selected encoded-execution patterns and selected outbound network APIs. Findings include source location, severity, confidence, false-positive caveats and SHA-256 provenance; static Python dependency impact is mapped. These are not malware/exfiltration verdicts and no remediation is performed. Dependency impact, broader-language coverage, trusted repair, Merge Studio, branding and release installers remain planned.
 - Initial automated tests and architecture/roadmap documents.
 
 This is an early development branch, not a production-ready universal decompiler or one-click clone tool.

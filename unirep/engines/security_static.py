@@ -6,6 +6,7 @@ executes, modifies, quarantines, or deletes target files.
 from __future__ import annotations
 
 import ast
+import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +47,20 @@ RULES = {
         "description": "Untrusted pickle data can execute code during deserialization.",
         "caveat": "Risk depends on whether the serialized input is trusted and integrity-protected.",
     },
+    "python.encoded-execution": {
+        "title": "Encoded or compressed content passed to dynamic execution",
+        "severity": "high",
+        "confidence": 0.88,
+        "description": "A dynamic execution call contains a recognized decoding/decompression call; inspect the payload source and purpose.",
+        "caveat": "Legitimate loaders, packers, educational examples and self-contained tools may decode code intentionally.",
+    },
+    "python.network-send": {
+        "title": "Outbound network operation",
+        "severity": "medium",
+        "confidence": 0.64,
+        "description": "A recognized outbound network API is called; review destination, data sensitivity, consent and call path.",
+        "caveat": "Network access is common in legitimate clients, update systems, telemetry and integrations; this is not proof of exfiltration.",
+    },
     "python.dynamic-import": {
         "title": "Dynamic module import",
         "severity": "low",
@@ -75,6 +90,13 @@ def _matches(tree: ast.AST) -> list[tuple[str, ast.AST, str]]:
         name = _call_name(node.func)
         if name in {"eval", "exec", "builtins.eval", "builtins.exec"}:
             matches.append(("python.dynamic-eval", node, name))
+            decoders = {"base64.b64decode", "base64.urlsafe_b64decode", "zlib.decompress", "codecs.decode"}
+            if any(isinstance(child, ast.Call) and _call_name(child.func) in decoders
+                   for argument in node.args for child in ast.walk(argument)):
+                matches.append(("python.encoded-execution", node, name))
+        elif name in {"requests.post", "httpx.post", "urllib.request.urlopen",
+                      "socket.connect", "socket.sendall"}:
+            matches.append(("python.network-send", node, name))
         elif name in {"os.system", "os.popen"}:
             matches.append(("python.os-system", node, name))
         elif name in {"pickle.load", "pickle.loads", "_pickle.load", "_pickle.loads"}:
@@ -119,6 +141,7 @@ class StaticSecurityEngine(AnalysisEngine):
 
         findings: list[dict[str, Any]] = []
         parse_errors: list[str] = []
+        scanned_file_hashes: list[dict[str, str]] = []
         scanned = 0
         skipped_large = 0
         for path in candidates:
@@ -128,7 +151,13 @@ class StaticSecurityEngine(AnalysisEngine):
                 if path.stat().st_size > max_source_bytes:
                     skipped_large += 1
                     continue
-                source = path.read_text(encoding="utf-8")
+                raw_source = path.read_bytes()
+                file_hash = hashlib.sha256(raw_source).hexdigest()
+                source = raw_source.decode("utf-8")
+                scanned_file_hashes.append({
+                    "file": str(path.relative_to(base)),
+                    "sha256": file_hash,
+                })
                 tree = ast.parse(source, filename=str(path))
             except (OSError, UnicodeError, SyntaxError) as exc:
                 parse_errors.append(f"{path.relative_to(base)}: {type(exc).__name__}: {exc}")
@@ -147,6 +176,7 @@ class StaticSecurityEngine(AnalysisEngine):
                     "severity": rule["severity"],
                     "confidence": rule["confidence"],
                     "file": str(path.relative_to(base)),
+                    "sha256": file_hash,
                     "line": line,
                     "symbol": symbol,
                     "snippet": snippet,
@@ -225,7 +255,8 @@ class StaticSecurityEngine(AnalysisEngine):
                 source=item["file"],
                 confidence=item["confidence"],
                 details={"rule_id": item["rule_id"], "severity": item["severity"],
-                         "classification": "suspicious", "symbol": item["symbol"]},
+                         "classification": "suspicious", "symbol": item["symbol"],
+                         "sha256": item["sha256"]},
             )
             for item in findings
         ]
@@ -235,7 +266,9 @@ class StaticSecurityEngine(AnalysisEngine):
             summary=f"Scanned {scanned} Python source file(s); reported {len(findings)} suspicious indicator(s).",
             findings={
                 "classification_policy": "Indicators are suspicious only; this engine never declares a file malicious.",
+                "ruleset_version": "1.1.0",
                 "files_scanned": scanned,
+                "scanned_file_hashes": scanned_file_hashes,
                 "findings": findings,
                 "parse_errors": parse_errors[:100],
                 "coverage_complete": not (parse_errors or skipped_large or len(candidates) >= max_files),

@@ -66,3 +66,36 @@ def test_static_security_maps_python_dependants_without_claiming_essentiality(tm
     assert component["static_dependant_count"] >= 1
     assert any(item["module"] == "sample.service" for item in component["dependants"])
     assert "do not reveal runtime plugins" in component["role_caveat"]
+
+
+def test_static_security_hashes_evidence_and_detects_encoded_execution(tmp_path):
+    source = (
+        "import base64\n"
+        "payload = 'ZWNobyBoaQ=='\n"
+        "exec(base64.b64decode(payload))\n"
+    )
+    path = tmp_path / "loader.py"
+    path.write_text(source, encoding="utf-8")
+    import hashlib
+    expected = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    result = StaticSecurityEngine().analyze(AnalysisTarget(str(tmp_path), "folder"))
+    findings = result.findings["findings"]
+    encoded = next(item for item in findings if item["rule_id"] == "python.encoded-execution")
+    assert encoded["sha256"] == expected
+    assert result.findings["scanned_file_hashes"] == [{"file": "loader.py", "sha256": expected}]
+    evidence = next(item for item in result.evidence
+                    if item.details.get("rule_id") == "python.encoded-execution")
+    assert evidence.details["sha256"] == expected
+
+
+def test_static_security_marks_network_api_as_indicator_not_exfiltration(tmp_path):
+    (tmp_path / "client.py").write_text(
+        "import requests\nrequests.post('https://example.invalid/telemetry', json={'ok': True})\n",
+        encoding="utf-8",
+    )
+    result = StaticSecurityEngine().analyze(AnalysisTarget(str(tmp_path), "folder"))
+    finding = next(item for item in result.findings["findings"]
+                   if item["rule_id"] == "python.network-send")
+    assert finding["classification"] == "suspicious"
+    assert finding["severity"] == "medium"
+    assert "not proof of exfiltration" in finding["false_positive_caveat"]
