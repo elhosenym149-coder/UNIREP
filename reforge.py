@@ -21,6 +21,7 @@ import pickletools
 import re
 import shutil
 import struct
+import stat
 import subprocess
 import sys
 import zipfile
