@@ -113,8 +113,6 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
           roots: list[str] | None = None, token: str | None = None,
           certfile: str | None = None, keyfile: str | None = None,
           insecure_lan: bool = False) -> None:
-    allowed_roots = [Path(x) for x in (roots or [str(Path.cwd())])]
-    manager = JobManager(allowed_roots)
     if token is not None and len(token) < 24:
         raise ValueError("Explicit bearer tokens must contain at least 24 characters")
     if bool(certfile) != bool(keyfile):
@@ -122,6 +120,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
     loopback = host in {"127.0.0.1", "localhost", "::1"}
     if not loopback and not certfile and not insecure_lan:
         raise ValueError("Non-loopback binding requires TLS (--cert/--key) or explicit --insecure-lan")
+    allowed_roots = [Path(x) for x in (roots or [str(Path.cwd())])]
+    manager = JobManager(allowed_roots)
     auth_token = token or secrets.token_urlsafe(32)
 
     class Handler(BaseHTTPRequestHandler):
