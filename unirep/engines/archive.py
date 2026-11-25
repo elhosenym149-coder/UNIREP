@@ -12,12 +12,23 @@ class ArchiveLimitError(ValueError):
 def _safe_member_path(root: Path, name: str) -> Path:
     normalized = name.replace("\\", "/")
     member = PurePosixPath(normalized)
-    if member.is_absolute() or any(part in {"..", ""} for part in member.parts):
+    # Reject absolute paths, traversal, Windows drive prefixes and empty names.
+    if (not normalized or member.is_absolute()
+            or (member.parts and member.parts[0].endswith(":"))
+            or any(part in {"..", ""} for part in member.parts)):
         raise ArchiveLimitError(f"Unsafe archive path: {name!r}")
-    destination = (root / Path(*member.parts)).resolve()
     base = root.resolve()
+    destination = (base / Path(*member.parts)).resolve()
     if destination != base and base not in destination.parents:
         raise ArchiveLimitError(f"Archive path escapes destination: {name!r}")
+    # Existing symlinks in the destination chain can redirect writes.
+    cursor = base
+    if cursor.exists() and cursor.is_symlink():
+        raise ArchiveLimitError("Destination root must not be a symlink")
+    for part in member.parts[:-1]:
+        cursor = cursor / part
+        if cursor.exists() and cursor.is_symlink():
+            raise ArchiveLimitError(f"Symlink in extraction path: {cursor}")
     return destination
 
 
@@ -57,6 +68,8 @@ def extract_zip_guarded(path: Path, destination: Path, **limits) -> dict:
                 continue
             target = _safe_member_path(destination, item.filename)
             target.parent.mkdir(parents=True, exist_ok=True)
+            # Re-check after creating parents to reduce symlink-redirection risk.
+            target = _safe_member_path(destination, item.filename)
             with archive.open(item, "r") as src, target.open("wb") as dst:
                 copied = 0
                 while True:
@@ -64,8 +77,8 @@ def extract_zip_guarded(path: Path, destination: Path, **limits) -> dict:
                     if not chunk:
                         break
                     copied += len(chunk)
-                    if copied > item.file_size:
-                        raise ArchiveLimitError("Archive member expanded beyond declared size")
+                    if copied > item.file_size or copied > limits.get("max_single_file", 256 << 20):
+                        raise ArchiveLimitError("Archive member expanded beyond configured size limit")
                     dst.write(chunk)
             written += 1
     summary["extracted_files"] = written
