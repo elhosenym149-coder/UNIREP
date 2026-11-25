@@ -36,6 +36,21 @@ python -m pip install -e ".[test]"
 python -m pytest
 ```
 
+Launch the optional Windows/Linux desktop interface:
+
+```bash
+python -m pip install -e ".[desktop]"
+unirep desktop
+```
+
+Start the authenticated local control API for companion clients:
+
+```bash
+unirep serve --root ./workspace
+```
+
+The server prints a bearer token at startup. By default it listens only on `127.0.0.1`; to connect a phone on the same trusted Wi-Fi network, explicitly bind to your computer's LAN interface (for example `--host 0.0.0.0`), use a strong private token, and keep the port firewalled. The API is not designed for direct internet exposure and does not provide TLS.
+
 List engines:
 
 ```bash
