@@ -37,6 +37,8 @@ python -m pip install -e ".[test]"
 python -m pytest
 ```
 
+On Windows, run `scripts\\install_windows.bat` once, then `scripts\\run_windows.bat`. To build a portable folder containing `Reforge.exe`, run `scripts\\build_windows_portable.bat`. A separate Windows CI workflow checks this packaging path.
+
 Launch the optional Windows/Linux desktop interface:
 
 ```bash
