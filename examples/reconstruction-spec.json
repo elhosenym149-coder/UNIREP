@@ -1,0 +1,11 @@
+{
+  "name": "ExampleDashboard",
+  "platform": "web",
+  "description": "A starter dashboard generated from reviewed requirements.",
+  "features": [
+    "Responsive navigation",
+    "Overview cards",
+    "Activity list",
+    "Accessible keyboard navigation"
+  ]
+}

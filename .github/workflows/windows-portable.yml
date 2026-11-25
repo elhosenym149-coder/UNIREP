@@ -1,0 +1,41 @@
+name: Windows portable desktop build
+
+on:
+  push:
+    branches: ["main", "work/**"]
+    paths:
+      - "unirep/**"
+      - "reforge.py"
+      - "run_desktop.py"
+      - "pyproject.toml"
+      - ".github/workflows/windows-portable.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "unirep/**"
+      - "reforge.py"
+      - "run_desktop.py"
+      - "pyproject.toml"
+      - ".github/workflows/windows-portable.yml"
+  workflow_dispatch:
+
+jobs:
+  build-portable:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install desktop and packaging dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[desktop]"
+          python -m pip install "pyinstaller>=6.10"
+      - name: Build portable application
+        run: python -m PyInstaller --noconfirm --clean --windowed --onedir --name Reforge --collect-all PySide6 --hidden-import shiboken6 run_desktop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reforge-windows-portable
+          path: dist/Reforge/
+          if-no-files-found: error

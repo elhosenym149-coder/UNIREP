@@ -21,6 +21,7 @@ import pickletools
 import re
 import shutil
 import struct
+import stat
 import subprocess
 import sys
 import zipfile
@@ -72,23 +73,70 @@ def human(n):
         n /= 1024
 
 
+MAX_ARCHIVE_ENTRIES = 10000
+MAX_ARCHIVE_TOTAL = 1 << 30
+MAX_ARCHIVE_MEMBER = 256 << 20
+
+
 def safe_join(base: Path, name: str) -> Path:
-    name = name.replace("\\", "/").lstrip("/")
-    parts = [p for p in name.split("/") if p not in ("", ".", "..")]
-    return base.joinpath(*parts)
+    normalized = str(name).replace("\\", "/")
+    if not normalized or normalized.startswith("/") or re.match(r"^[A-Za-z]:", normalized):
+        raise ValueError(f"Unsafe archive path: {name!r}")
+    parts = [p for p in normalized.split("/") if p not in ("", ".")]
+    if not parts:
+        raise ValueError(f"Empty archive path: {name!r}")
+    if any(p == ".." for p in parts):
+        raise ValueError(f"Archive path traversal rejected: {name!r}")
+    raw_base = Path(base).absolute()
+    for ancestor in (raw_base, *raw_base.parents):
+        if ancestor.is_symlink():
+            raise ValueError(f"Symlink in extraction destination: {ancestor}")
+    root = raw_base.resolve()
+    raw_target = root.joinpath(*parts)
+    if raw_target.is_symlink():
+        raise ValueError(f"Refusing to overwrite symlink: {raw_target}")
+    target = raw_target.resolve()
+    if target != root and root not in target.parents:
+        raise ValueError(f"Archive path escapes destination: {name!r}")
+    cursor = root
+    for part in parts[:-1]:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise ValueError(f"Symlink in extraction path: {cursor}")
+    return target
 
 
 def unzip(path, dest: Path):
     dest.mkdir(parents=True, exist_ok=True)
     n = 0
     with zipfile.ZipFile(path) as z:
-        for info in z.infolist():
+        infos = z.infolist()
+        if len(infos) > MAX_ARCHIVE_ENTRIES:
+            raise ValueError("Archive contains too many entries")
+        total = sum(i.file_size for i in infos if not i.is_dir())
+        if total > MAX_ARCHIVE_TOTAL:
+            raise ValueError("Archive exceeds total uncompressed size limit")
+        for info in infos:
             if info.is_dir():
                 continue
+            if info.file_size > MAX_ARCHIVE_MEMBER:
+                raise ValueError(f"Archive member exceeds size limit: {info.filename}")
+            mode = (info.external_attr >> 16) & 0o170000
+            if mode == stat.S_IFLNK:
+                raise ValueError(f"Archive symlink rejected: {info.filename}")
             target = safe_join(dest, info.filename)
             target.parent.mkdir(parents=True, exist_ok=True)
+            target = safe_join(dest, info.filename)
+            copied = 0
             with z.open(info) as src, open(target, "wb") as dst:
-                shutil.copyfileobj(src, dst)
+                while True:
+                    chunk = src.read(1 << 20)
+                    if not chunk:
+                        break
+                    copied += len(chunk)
+                    if copied > info.file_size or copied > MAX_ARCHIVE_MEMBER:
+                        raise ValueError(f"Archive member expanded beyond size limit: {info.filename}")
+                    dst.write(chunk)
             n += 1
     return n
 
