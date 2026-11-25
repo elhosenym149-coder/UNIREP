@@ -44,3 +44,25 @@ def test_static_security_supports_single_python_file(tmp_path):
     result = StaticSecurityEngine().analyze(AnalysisTarget(str(path), "file"))
     assert result.findings["files_scanned"] == 1
     assert result.findings["findings"][0]["rule_id"] == "python.dynamic-eval"
+
+
+def test_static_security_maps_python_dependants_without_claiming_essentiality(tmp_path):
+    package = tmp_path / "sample"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "danger.py").write_text(
+        "import subprocess\nsubprocess.run('echo fixed', shell=True)\n",
+        encoding="utf-8",
+    )
+    (package / "service.py").write_text(
+        "from . import danger\ndef run(): return danger\n",
+        encoding="utf-8",
+    )
+    result = StaticSecurityEngine().analyze(AnalysisTarget(str(tmp_path), "folder"))
+    finding = next(item for item in result.findings["findings"]
+                   if item["rule_id"] == "python.shell-true")
+    component = finding["component"]
+    assert component["module"] == "sample.danger"
+    assert component["static_dependant_count"] >= 1
+    assert any(item["module"] == "sample.service" for item in component["dependants"])
+    assert "do not reveal runtime plugins" in component["role_caveat"]

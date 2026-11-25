@@ -11,6 +11,7 @@ from typing import Any
 
 from unirep.core.engine import AnalysisEngine
 from unirep.core.models import AnalysisTarget, EngineResult, Evidence
+from unirep.engines.architecture import PythonArchitectureEngine
 
 IGNORED_DIRS = {".git", ".venv", "venv", "__pycache__", "node_modules", "dist", "build"}
 MAX_FILES_HARD_LIMIT = 50000
@@ -154,6 +155,56 @@ class StaticSecurityEngine(AnalysisEngine):
                     "action": "review_only",
                 })
 
+        dependency_graph: dict[str, Any] = {"available": False, "complete": False, "items": []}
+        if root.is_dir():
+            try:
+                graph_result = PythonArchitectureEngine().analyze(
+                    AnalysisTarget(value=str(root), kind="folder"),
+                    {"max_files": max_files},
+                )
+                graph = graph_result.findings
+                path_to_module = {node["path"]: node["id"] for node in graph.get("nodes", [])}
+                reverse_edges: dict[str, set[str]] = {}
+                for edge in graph.get("edges", []):
+                    reverse_edges.setdefault(edge["target"], set()).add(edge["source"])
+                for finding in findings:
+                    module = path_to_module.get(finding["file"])
+                    impacted: list[dict[str, str]] = []
+                    if module:
+                        seen: set[str] = set()
+                        frontier = [(module, 0)]
+                        while frontier:
+                            current, depth = frontier.pop(0)
+                            for dependant in sorted(reverse_edges.get(current, set())):
+                                if dependant in seen or dependant == module:
+                                    continue
+                                seen.add(dependant)
+                                impacted.append({
+                                    "module": dependant,
+                                    "path": next((node["path"] for node in graph.get("nodes", [])
+                                                  if node["id"] == dependant), ""),
+                                    "relationship": "direct" if depth == 0 else "transitive",
+                                })
+                                frontier.append((dependant, depth + 1))
+                    finding["component"] = {
+                        "module": module,
+                        "static_dependant_count": len(impacted),
+                        "role_hint": ("shared_dependency_candidate" if len(impacted) >= 2 else
+                                      "single_consumer" if len(impacted) == 1 else
+                                      "no_static_dependants_found"),
+                        "dependants": impacted[:500],
+                        "role_caveat": "Static Python imports do not reveal runtime plugins, reflection, external callers or non-Python dependencies.",
+                    }
+                dependency_graph = {
+                    "available": True,
+                    "complete": bool(graph.get("complete")) and not graph.get("parse_errors"),
+                    "module_count": len(graph.get("nodes", [])),
+                    "edge_count": len(graph.get("edges", [])),
+                    "parse_errors": graph.get("parse_errors", [])[:100],
+                }
+            except (OSError, ValueError, RuntimeError) as exc:
+                dependency_graph = {"available": False, "complete": False, "error": str(exc)}
+
         findings.sort(key=lambda item: ({"critical": 0, "high": 1, "medium": 2, "low": 3}.get(item["severity"], 4),
                                         item["file"], item["line"], item["rule_id"]))
         warnings: list[str] = [
@@ -189,6 +240,7 @@ class StaticSecurityEngine(AnalysisEngine):
                 "parse_errors": parse_errors[:100],
                 "coverage_complete": not (parse_errors or skipped_large or len(candidates) >= max_files),
                 "remediation_performed": False,
+                "dependency_graph": dependency_graph,
             },
             warnings=warnings,
             evidence=evidence,
