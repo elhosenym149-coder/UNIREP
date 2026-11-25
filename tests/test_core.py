@@ -38,8 +38,8 @@ def test_python_architecture_graph(tmp_path):
     pkg = tmp_path / "samplepkg"
     pkg.mkdir()
     (pkg / "__init__.py").write_text("from . import service")
-    (pkg / "service.py").write_text("from .utils import helper\\ndef run(): return helper()\\n")
-    (pkg / "utils.py").write_text("def helper(): return 1\\n")
+    (pkg / "service.py").write_text("from .utils import helper\ndef run(): return helper()\n")
+    (pkg / "utils.py").write_text("def helper(): return 1\n")
     reg = EngineRegistry()
     from unirep.engines.architecture import PythonArchitectureEngine
     reg.register(PythonArchitectureEngine())
