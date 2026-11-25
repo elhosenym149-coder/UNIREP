@@ -46,6 +46,7 @@ unirep desktop
 Start the authenticated local control API for companion clients:
 
 ```bash
+mkdir workspace
 unirep serve --root ./workspace
 ```
 
