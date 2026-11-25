@@ -23,3 +23,17 @@ def test_rejects_zip_slip(tmp_path):
         z.writestr("../escape.txt", "bad")
     with pytest.raises(ArchiveLimitError):
         inspect_zip(source)
+
+
+def test_rejects_windows_drive_and_size_limit(tmp_path):
+    source = tmp_path / "unsafe.zip"
+    with zipfile.ZipFile(source, "w") as z:
+        z.writestr("C:/outside.txt", "bad")
+    with pytest.raises(ArchiveLimitError):
+        inspect_zip(source)
+
+    source2 = tmp_path / "large.zip"
+    with zipfile.ZipFile(source2, "w") as z:
+        z.writestr("large.bin", "x" * 20)
+    with pytest.raises(ArchiveLimitError):
+        inspect_zip(source2, max_single_file=10)
