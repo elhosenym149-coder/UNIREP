@@ -80,6 +80,30 @@ class JobManager:
     def engines(self) -> list[dict[str, object]]:
         return self.registry.list()
 
+    def list_roots(self) -> list[str]:
+        return [str(root) for root in self.roots]
+
+    def browse(self, value: str) -> list[dict[str, Any]]:
+        folder = self._resolve_target(value, "folder")
+        entries = []
+        for item in sorted(folder.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())):
+            try:
+                if item.is_symlink():
+                    continue
+                resolved = item.resolve(strict=True)
+                if not any(resolved == root or root in resolved.parents for root in self.roots):
+                    continue
+                info = {"name": item.name, "path": str(resolved),
+                        "kind": "folder" if resolved.is_dir() else "file"}
+                if resolved.is_file():
+                    info["size"] = resolved.stat().st_size
+                entries.append(info)
+                if len(entries) >= 500:
+                    break
+            except OSError:
+                continue
+        return entries
+
     def close(self) -> None:
         self.executor.shutdown(wait=True, cancel_futures=True)
 
@@ -114,11 +138,24 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
         def do_GET(self):
             if not self._authorized():
                 return
-            route = urlparse(self.path).path
+            parsed = urlparse(self.path)
+            route = parsed.path
             if route == "/v1/health":
                 self._send(200, {"status": "ok", "service": "unirep"})
             elif route == "/v1/engines":
                 self._send(200, {"engines": manager.engines()})
+            elif route == "/v1/roots":
+                self._send(200, {"roots": manager.list_roots()})
+            elif route == "/v1/browse":
+                from urllib.parse import parse_qs
+                query = parse_qs(parsed.query)
+                path = query.get("path", manager.list_roots()[0])[0]
+                try:
+                    self._send(200, {"path": path, "entries": manager.browse(path)})
+                except PermissionError as exc:
+                    self._send(403, {"error": str(exc)})
+                except (ValueError, OSError) as exc:
+                    self._send(400, {"error": str(exc)})
             elif route.startswith("/v1/jobs/"):
                 job_id = route.rsplit("/", 1)[-1]
                 result = manager.get(job_id)
