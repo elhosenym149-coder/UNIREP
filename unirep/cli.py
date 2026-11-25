@@ -33,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("engines", help="List installed analysis engines")
     sub.add_parser("desktop", help="Launch the optional desktop interface")
+    rebuild = sub.add_parser("rebuild", help="Generate a starter project from a reviewed JSON spec")
+    rebuild.add_argument("spec")
+    rebuild.add_argument("--out", required=True)
     serve = sub.add_parser("serve", help="Start authenticated local/LAN control API")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
@@ -51,6 +54,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     registry = build_registry()
+    if args.command == "rebuild":
+        from unirep.reconstruction.generator import generate_project
+        result = generate_project(Path(args.spec), Path(args.out))
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return 0
     if args.command == "serve":
         from unirep.service.server import serve as serve_api
         serve_api(args.host, args.port, args.root or None, args.token)
