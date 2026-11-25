@@ -11,7 +11,7 @@ Reforge is being developed as a modular platform for inspecting software that yo
 The original `reforge.py` analyzer is preserved as the legacy implementation. The new modular package is being built alongside it so that capabilities can be migrated only after tests and parity checks.
 
 Current modular foundation:
-- Engine contracts, registry and fault-isolated job runner.
+- Engine contracts, registry, fault-isolated job runner and evidence/provenance records.
 - Read-only filesystem inventory and project-manifest detection.
 - ZIP inspection/extraction with entry, size, path-traversal and symlink safeguards.
 - Optional Playwright-based read-only browser inspection of an explicitly authorized website, including sanitized request/response metadata.
