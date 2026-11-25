@@ -7,7 +7,7 @@ from time import perf_counter
 from typing import Any
 
 from unirep.core.engine import AnalysisEngine
-from unirep.core.models import AnalysisTarget, EngineResult
+from unirep.core.models import AnalysisTarget, EngineResult, Evidence
 
 DEFAULT_IGNORES = {".git", ".venv", "venv", "__pycache__", "node_modules", ".next", "dist", "build"}
 
@@ -79,6 +79,8 @@ class InventoryEngine(AnalysisEngine):
                 "complete": len(files) < max_files,
             },
             warnings=warnings,
+            evidence=[Evidence(claim=f"Scanned {scanned} regular file(s)", source=str(root), confidence=1.0,
+                              details={"total_bytes": total_bytes})],
             confidence=1.0,
             duration_seconds=round(perf_counter() - started, 6),
         )
