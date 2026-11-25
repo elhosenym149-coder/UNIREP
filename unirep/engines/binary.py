@@ -50,12 +50,13 @@ def inspect_pe(path: Path) -> dict[str, Any]:
 
 
 def inspect_elf(path: Path) -> dict[str, Any]:
-    header = _read_exact(path, 0, 64)
-    if header[:4] != b"\x7fELF":
+    ident = _read_exact(path, 0, 16)
+    if ident[:4] != b"\x7fELF":
         raise ValueError("Not an ELF executable")
-    elf_class, encoding = header[4], header[5]
+    elf_class, encoding = ident[4], ident[5]
     if elf_class not in (1, 2) or encoding not in (1, 2):
         raise ValueError("Unsupported ELF class or byte order")
+    header = _read_exact(path, 0, 64 if elf_class == 2 else 52)
     endian = "<" if encoding == 1 else ">"
     is_64 = elf_class == 2
     e_type, machine = struct.unpack_from(endian + "HH", header, 16)
@@ -79,17 +80,19 @@ def inspect_elf(path: Path) -> dict[str, Any]:
 
 
 def inspect_macho(path: Path) -> dict[str, Any]:
-    header = _read_exact(path, 0, 32)
-    magic = header[:4]
+    magic = _read_exact(path, 0, 4)
     formats = {
         b"\xfe\xed\xfa\xce": (">", False), b"\xce\xfa\xed\xfe": ("<", False),
         b"\xfe\xed\xfa\xcf": (">", True), b"\xcf\xfa\xed\xfe": ("<", True)
     }
+    if magic in (b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca", b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"):
+        fat = _read_exact(path, 0, 8)
+        return {"format": "Mach-O universal/fat", "fat_header": fat.hex(),
+                "note": "Fat binary header detected; slice parsing not yet implemented."}
     if magic not in formats:
-        if magic in (b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca", b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"):
-            return {"format": "Mach-O universal/fat", "note": "Fat binary header detected; slice parsing not yet implemented."}
         raise ValueError("Not a Mach-O executable")
     endian, is_64 = formats[magic]
+    header = _read_exact(path, 0, 32 if is_64 else 28)
     cpu, subtype, filetype, ncmds, sizeofcmds, flags = struct.unpack_from(endian + "IIIIII", header, 4)
     return {"format": "Mach-O", "class": "64-bit" if is_64 else "32-bit",
             "cpu_type": cpu, "cpu_subtype": subtype, "file_type": filetype,
