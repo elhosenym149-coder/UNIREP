@@ -37,3 +37,14 @@ def test_legacy_adapter_returns_report_without_retaining_temp_files(tmp_path):
     result = LegacyPackageEngine().analyze(AnalysisTarget(str(source), "file"))
     assert result.engine == "legacy_package"
     assert result.findings["temporary_extraction_retained"] is False
+
+
+def test_legacy_adapter_explains_temporary_extraction_cleanup(tmp_path):
+    import zipfile
+    from unirep.core.models import AnalysisTarget
+    from unirep.engines.legacy import LegacyPackageEngine
+    archive = tmp_path / "package.zip"
+    with zipfile.ZipFile(archive, "w") as z:
+        z.writestr("app.txt", "hello")
+    result = LegacyPackageEngine().analyze(AnalysisTarget(str(archive), "file"))
+    assert any("discarded" in warning for warning in result.warnings)
