@@ -51,3 +51,26 @@ def test_python_architecture_graph(tmp_path):
     assert len(graph["nodes"]) == 3
     assert any(edge["source"] == "samplepkg.service" and edge["target"] == "samplepkg.utils"
                for edge in graph["edges"])
+
+
+def test_job_manager_restricts_targets_to_configured_roots(tmp_path):
+    from unirep.service.server import JobManager
+    allowed = tmp_path / "allowed"
+    denied = tmp_path / "denied"
+    allowed.mkdir()
+    denied.mkdir()
+    sample = allowed / "sample.txt"
+    sample.write_text("safe")
+    manager = JobManager([allowed])
+    try:
+        assert manager._resolve_target(str(sample), "file") == sample.resolve()
+        import pytest
+        with pytest.raises(PermissionError):
+            manager._resolve_target(str(denied), "folder")
+    finally:
+        manager.close()
+
+
+def test_desktop_module_does_not_require_qt_at_import_time():
+    import unirep.desktop
+    assert callable(unirep.desktop.main)
