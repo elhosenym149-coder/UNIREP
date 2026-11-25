@@ -14,7 +14,8 @@ Current modular foundation:
 - Engine contracts, registry and fault-isolated job runner.
 - Read-only filesystem inventory and project-manifest detection.
 - ZIP inspection/extraction with entry, size, path-traversal and symlink safeguards.
-- Optional Playwright-based read-only browser inspection of an explicitly authorized website.
+- Optional Playwright-based read-only browser inspection of an explicitly authorized website, including sanitized request/response metadata.
+- Static Python AST import graphing and a compatibility adapter for the original package analyzer.
 - JSON job reports and a command-line interface.
 - Initial automated tests and architecture/roadmap documents.
 
@@ -46,6 +47,14 @@ Analyze a local folder (read-only):
 ```bash
 unirep analyze ./path/to/project --out analysis.json
 ```
+
+Inspect an explicitly authorized website (read-only):
+
+```bash
+unirep web https://your-owned-site.example --authorized --out reports/site.json
+```
+
+Additional resource hosts can be allowlisted with `--allow-host cdn.your-owned-site.example`. Query strings and URL fragments are removed from captured network metadata.
 
 Install optional browser support:
 
