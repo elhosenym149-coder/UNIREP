@@ -9,6 +9,7 @@ from typing import Any
 import hmac
 import json
 import secrets
+import ssl
 import sys
 from urllib.parse import urlparse
 
@@ -109,11 +110,18 @@ class JobManager:
 
 
 def serve(host: str = "127.0.0.1", port: int = 8765,
-          roots: list[str] | None = None, token: str | None = None) -> None:
+          roots: list[str] | None = None, token: str | None = None,
+          certfile: str | None = None, keyfile: str | None = None,
+          insecure_lan: bool = False) -> None:
     allowed_roots = [Path(x) for x in (roots or [str(Path.cwd())])]
     manager = JobManager(allowed_roots)
     if token is not None and len(token) < 24:
         raise ValueError("Explicit bearer tokens must contain at least 24 characters")
+    if bool(certfile) != bool(keyfile):
+        raise ValueError("Both --cert and --key must be provided together")
+    loopback = host in {"127.0.0.1", "localhost", "::1"}
+    if not loopback and not certfile and not insecure_lan:
+        raise ValueError("Non-loopback binding requires TLS (--cert/--key) or explicit --insecure-lan")
     auth_token = token or secrets.token_urlsafe(32)
 
     class Handler(BaseHTTPRequestHandler):
@@ -194,11 +202,17 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
             sys.stderr.write("UNIREP API: " + (fmt % args) + "\n")
 
     httpd = ThreadingHTTPServer((host, port), Handler)
-    print(f"UNIREP control API listening on http://{host}:{port}")
+    scheme = "http"
+    if certfile and keyfile:
+        tls = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        tls.load_cert_chain(certfile=certfile, keyfile=keyfile)
+        httpd.socket = tls.wrap_socket(httpd.socket, server_side=True)
+        scheme = "https"
+    print(f"UNIREP control API listening on {scheme}://{host}:{port}")
     print(f"Allowed roots: {', '.join(str(x.resolve()) for x in allowed_roots)}")
     print(f"Bearer token (keep private): {auth_token}")
-    if host not in {"127.0.0.1", "localhost", "::1"}:
-        print("WARNING: LAN binding enabled. Use a trusted network and firewall; this server does not provide TLS.")
+    if not loopback and insecure_lan and not certfile:
+        print("WARNING: INSECURE LAN mode: bearer tokens and analysis data are unencrypted. Use only on a trusted isolated network.")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
