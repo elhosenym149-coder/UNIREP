@@ -17,7 +17,11 @@ def _safe_member_path(root: Path, name: str) -> Path:
             or (member.parts and member.parts[0].endswith(":"))
             or any(part in {"..", ""} for part in member.parts)):
         raise ArchiveLimitError(f"Unsafe archive path: {name!r}")
-    base = root.resolve()
+    raw_root = Path(root).absolute()
+    for ancestor in (raw_root, *raw_root.parents):
+        if ancestor.is_symlink():
+            raise ArchiveLimitError(f"Symlink in extraction destination: {ancestor}")
+    base = raw_root.resolve()
     destination = (base / Path(*member.parts)).resolve()
     if destination != base and base not in destination.parents:
         raise ArchiveLimitError(f"Archive path escapes destination: {name!r}")
