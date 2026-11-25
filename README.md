@@ -44,6 +44,14 @@ python -m pip install -e ".[desktop]"
 unirep desktop
 ```
 
+Generate a clean Python or web starter from an analyst-reviewed reconstruction specification:
+
+```bash
+unirep rebuild reconstruction-spec.json --out ./generated-project
+```
+
+The generator creates a scaffold from explicit requirements; it does not claim to recover hidden server code, private model weights or the original source tree.
+
 Start the authenticated local control API for companion clients:
 
 ```bash
