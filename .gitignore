@@ -11,3 +11,8 @@ dist/
 unirep-report.json
 reforge_out/
 unirep_workspace/
+
+.gradle/
+local.properties
+*.jks
+*.keystore
