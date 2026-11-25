@@ -112,6 +112,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
           roots: list[str] | None = None, token: str | None = None) -> None:
     allowed_roots = [Path(x) for x in (roots or [str(Path.cwd())])]
     manager = JobManager(allowed_roots)
+    if token is not None and len(token) < 24:
+        raise ValueError("Explicit bearer tokens must contain at least 24 characters")
     auth_token = token or secrets.token_urlsafe(32)
 
     class Handler(BaseHTTPRequestHandler):
@@ -124,6 +126,8 @@ def serve(host: str = "127.0.0.1", port: int = 8765,
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
             self.end_headers()
             self.wfile.write(body)
 
