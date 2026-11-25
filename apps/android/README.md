@@ -19,14 +19,14 @@ The APK is normally written to `app/build/outputs/apk/debug/app-debug.apk`.
 1. On the computer, start the API with an allowed workspace folder:
 
    ```bash
-   unirep serve --host 0.0.0.0 --port 8765 --root /path/to/workspace
+   unirep serve --host 0.0.0.0 --port 8765 --root /path/to/workspace --cert cert.pem --key key.pem
    ```
 
 2. Keep the computer and phone on the same trusted Wi-Fi network.
 3. Enter the computer's LAN IP and the bearer token printed by the server.
 4. Browse only the configured allowed folders, choose a file/folder, select engines and start an analysis.
 
-The server defaults to localhost if no host is supplied. LAN mode uses plain HTTP and is intended only for trusted local networks behind a firewall. Never expose this API directly to the public internet. The token is not persisted by the current Android scaffold.
+The server defaults to localhost if no host is supplied. Non-loopback access requires TLS. For a development-only isolated network, you may explicitly use `--insecure-lan`, but bearer tokens and analysis data will be unencrypted. Install your private CA certificate on Android when using a private TLS certificate. Never expose this API directly to the public internet. The token is not persisted by the current Android scaffold.
 
 ## Current limitations
 
