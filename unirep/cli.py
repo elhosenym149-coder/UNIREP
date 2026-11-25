@@ -12,6 +12,7 @@ from unirep.engines.inventory import InventoryEngine
 from unirep.engines.signatures import SignatureEngine
 from unirep.engines.architecture import PythonArchitectureEngine
 from unirep.engines.web.browser import BrowserInspectionEngine
+from unirep.engines.legacy import LegacyPackageEngine
 
 
 def build_registry() -> EngineRegistry:
@@ -20,6 +21,7 @@ def build_registry() -> EngineRegistry:
     registry.register(SignatureEngine())
     registry.register(PythonArchitectureEngine())
     registry.register(BrowserInspectionEngine())
+    registry.register(LegacyPackageEngine())
     return registry
 
 
