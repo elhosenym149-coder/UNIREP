@@ -37,3 +37,18 @@ def test_rejects_windows_drive_and_size_limit(tmp_path):
         z.writestr("large.bin", "x" * 20)
     with pytest.raises(ArchiveLimitError):
         inspect_zip(source2, max_single_file=10)
+
+
+def test_rejects_symlink_destination(tmp_path):
+    real = tmp_path / "real"
+    real.mkdir()
+    link = tmp_path / "link"
+    try:
+        link.symlink_to(real, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlink creation is unavailable on this platform")
+    source = tmp_path / "sample.zip"
+    with zipfile.ZipFile(source, "w") as z:
+        z.writestr("file.txt", "data")
+    with pytest.raises(ArchiveLimitError):
+        extract_zip_guarded(source, link)
