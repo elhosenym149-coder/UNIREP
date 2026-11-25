@@ -16,3 +16,5 @@ unirep_workspace/
 local.properties
 *.jks
 *.keystore
+
+Reforge.spec
