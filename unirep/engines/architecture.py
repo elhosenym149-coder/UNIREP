@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 from unirep.core.engine import AnalysisEngine
-from unirep.core.models import AnalysisTarget, EngineResult
+from unirep.core.models import AnalysisTarget, EngineResult, Evidence
 
 IGNORED = {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist"}
 
@@ -108,5 +108,8 @@ class PythonArchitectureEngine(AnalysisEngine):
                 "complete": len(paths) < max_files,
             },
             warnings=warnings,
+            evidence=[Evidence(claim=f"Static import edge: {a} imports {b}", kind="observed",
+                              source=str(module_to_path[a].relative_to(root)), confidence=0.95,
+                              details={"target_module": b}) for a, b in sorted(edges)[:2000]],
             confidence=0.9
         )
