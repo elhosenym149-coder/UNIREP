@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 from unirep.core.engine import AnalysisEngine
-from unirep.core.models import AnalysisTarget, EngineResult
+from unirep.core.models import AnalysisTarget, EngineResult, Evidence
 
 SIGNATURES = {
     "package.json": "Node.js / JavaScript project",
@@ -49,5 +49,8 @@ class SignatureEngine(AnalysisEngine):
             engine=self.name, status="partial" if warnings else "ok",
             summary=f"Detected {len(found)} project manifest(s).",
             findings={"manifests": found, "technology_hints": technologies},
-            warnings=warnings, confidence=0.85
+            warnings=warnings,
+            evidence=[Evidence(claim=f"Found manifest {x['file']}", source=x["file"], confidence=0.95,
+                              details={"technology": x["technology"]}) for x in found],
+            confidence=0.85
         )
