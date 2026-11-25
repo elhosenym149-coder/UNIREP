@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ast
+import sys
 from pathlib import Path
 from typing import Any
 from unirep.core.engine import AnalysisEngine
@@ -51,7 +52,8 @@ class PythonArchitectureEngine(AnalysisEngine):
         nodes = [{"id": name, "path": str(path.relative_to(root)), "kind": "python_module"}
                  for name, path in sorted(module_to_path.items())]
         edges: set[tuple[str, str]] = set()
-        external: set[str] = set()
+        stdlib: set[str] = set()
+        third_party: set[str] = set()
         parse_errors: list[str] = []
         unresolved: set[str] = set()
 
@@ -79,7 +81,11 @@ class PythonArchitectureEngine(AnalysisEngine):
                     if match:
                         edges.add((source_module, match))
                     elif imported and not imported.startswith("."):
-                        external.add(imported.split(".")[0])
+                        root_name = imported.split(".")[0]
+                        if root_name in sys.stdlib_module_names:
+                            stdlib.add(root_name)
+                        else:
+                            third_party.add(root_name)
                         unresolved.add(imported)
 
         warnings = [f"Could not parse {len(parse_errors)} Python file(s)."] if parse_errors else []
@@ -91,7 +97,8 @@ class PythonArchitectureEngine(AnalysisEngine):
             findings={
                 "nodes": nodes,
                 "edges": [{"source": a, "target": b, "type": "imports"} for a, b in sorted(edges)],
-                "external_import_roots": sorted(external),
+                "stdlib_import_roots": sorted(stdlib),
+                "third_party_import_roots": sorted(third_party),
                 "unresolved_imports": sorted(unresolved)[:500],
                 "parse_errors": parse_errors[:100],
                 "complete": len(paths) < max_files,
