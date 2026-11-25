@@ -41,6 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--root", action="append", default=[], help="Allowed local path root (repeatable)")
     serve.add_argument("--token", default=None, help="Optional bearer token; otherwise generated at startup")
+    serve.add_argument("--cert", default=None, help="TLS certificate PEM for HTTPS LAN access")
+    serve.add_argument("--key", default=None, help="TLS private key PEM for HTTPS LAN access")
+    serve.add_argument("--insecure-lan", action="store_true", help="Explicitly allow unencrypted non-loopback access (development only)")
     web = sub.add_parser("web", help="Inspect an authorized website in read-only mode")
     web.add_argument("url")
     web.add_argument("--authorized", action="store_true", help="Confirm you own or are authorized to assess this site")
@@ -61,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "serve":
         from unirep.service.server import serve as serve_api
-        serve_api(args.host, args.port, args.root or None, args.token)
+        serve_api(args.host, args.port, args.root or None, args.token, args.cert, args.key, args.insecure_lan)
         return 0
     if args.command == "desktop":
         from unirep.desktop import main as desktop_main
