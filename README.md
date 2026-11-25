@@ -22,6 +22,16 @@ Current modular foundation:
 
 This is an early development branch, not a production-ready universal decompiler or one-click clone tool.
 
+## Install directly from GitHub
+
+Install the command-line package and optional desktop/browser features from the active development branch:
+
+```bash
+python -m pip install "unirep-reforge[desktop,web] @ git+https://github.com/elhosenym149-coder/UNIREP.git@work/reforge-validation"
+```
+
+For a reproducible environment, pin to a reviewed commit SHA rather than a moving branch.
+
 ## Quick start
 
 Python 3.10 or newer:
