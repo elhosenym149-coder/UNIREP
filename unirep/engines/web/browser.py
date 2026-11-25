@@ -13,7 +13,14 @@ from unirep.core.models import AnalysisTarget, EngineResult, Evidence
 
 def _safe_url(value: str) -> str:
     parsed = urlparse(value)
-    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+    # Drop user-info, query strings and fragments to avoid leaking credentials/tokens.
+    host = parsed.hostname or ""
+    try:
+        if parsed.port:
+            host = f"{host}:{parsed.port}"
+    except ValueError:
+        host = parsed.hostname or ""
+    return urlunparse((parsed.scheme, host, parsed.path, "", "", ""))
 
 
 class BrowserInspectionEngine(AnalysisEngine):
@@ -82,6 +89,14 @@ class BrowserInspectionEngine(AnalysisEngine):
             finally:
                 context.close()
                 browser.close()
+
+        for link in page_info.get("links", []):
+            link["href"] = _safe_url(link.get("href", ""))
+        for form in page_info.get("forms", []):
+            form["action"] = _safe_url(form.get("action", ""))
+        page_info["scripts"] = [
+            _safe_url(src) if src != "[inline]" else src for src in page_info.get("scripts", [])
+        ]
 
         return EngineResult(
             engine=self.name, status="ok",
