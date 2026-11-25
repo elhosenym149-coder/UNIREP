@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -95,7 +96,8 @@ private fun ReforgeApp() {
                 OutlinedTextField(baseUrl, { baseUrl = it }, label = { Text("Desktop server URL") },
                     modifier = Modifier.fillMaxWidth(), singleLine = true)
                 OutlinedTextField(token, { token = it }, label = { Text("Bearer token") },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true)
+                    modifier = Modifier.fillMaxWidth(), singleLine = true,
+                    visualTransformation = PasswordVisualTransformation())
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(enabled = !busy && token.isNotBlank(), onClick = {
                         scope.launch {
@@ -108,6 +110,8 @@ private fun ReforgeApp() {
                                 val engineResult = apiCall(baseUrl, token, "GET", "/v1/engines")
                                 val engineArray = engineResult.optJSONArray("engines") ?: JSONArray()
                                 engines = (0 until engineArray.length()).map { engineArray.getJSONObject(it) }
+                                    .filter { it.optString("name") != "web_browser" }
+                                selectedEngines = engines.map { it.optString("name") }.toSet()
                                 connected = true
                                 message = "Connected. Select a project from an allowed folder."
                                 roots.firstOrNull()?.let { browse(it) }
@@ -129,6 +133,10 @@ private fun ReforgeApp() {
                     }
                     Text(currentPath, style = MaterialTheme.typography.labelSmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(enabled = roots.any { currentPath != it && currentPath.startsWith(it) }, onClick = {
+                            val parent = java.io.File(currentPath).parent
+                            if (parent != null) browse(parent)
+                        }) { Text("Parent folder") }
                         Button(onClick = {
                             targetPath = currentPath
                             targetKind = "folder"
