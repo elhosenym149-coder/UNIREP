@@ -10,12 +10,14 @@ from unirep.core.registry import EngineRegistry
 from unirep.core.runner import AnalysisRunner
 from unirep.engines.inventory import InventoryEngine
 from unirep.engines.signatures import SignatureEngine
+from unirep.engines.architecture import PythonArchitectureEngine
 
 
 def build_registry() -> EngineRegistry:
     registry = EngineRegistry()
     registry.register(InventoryEngine())
     registry.register(SignatureEngine())
+    registry.register(PythonArchitectureEngine())
     return registry
 
 
