@@ -18,6 +18,7 @@ Current modular foundation:
 - Static Python AST import graphing, native PE/ELF/Mach-O header inspection, and a compatibility adapter for the original package analyzer.
 - Early Android companion source plus a GitHub Actions debug-APK build workflow.
 - JSON job reports and a command-line interface.
+- Design specifications for evidence-led malware analysis and reversible repair, multi-application Merge Studio, product branding, and platform-specific build/install handoff (planned capabilities, not yet implemented).
 - Initial automated tests and architecture/roadmap documents.
 
 This is an early development branch, not a production-ready universal decompiler or one-click clone tool.
@@ -71,7 +72,7 @@ mkdir workspace
 unirep serve --root ./workspace
 ```
 
-The server prints a generated bearer token at startup. For a fixed token, set `UNIREP_API_TOKEN` in the environment rather than putting secrets in shell history or command-line arguments. By default it listens only on `127.0.0.1`; to connect a phone on the same trusted Wi-Fi network, explicitly bind to your computer's LAN interface (for example `--host 0.0.0.0`), use a strong private token, and keep the port firewalled. The API is not designed for direct internet exposure and does not provide TLS.
+The server prints a generated bearer token at startup. For a fixed token, set `UNIREP_API_TOKEN` in the environment rather than putting secrets in shell history or command-line arguments. By default it listens only on `127.0.0.1`. Non-loopback access requires TLS (`--cert cert.pem --key key.pem`) or the explicit development-only `--insecure-lan` flag. Prefer HTTPS with a certificate trusted by the phone. Unencrypted LAN mode exposes bearer tokens and analysis data to interception; use it only on an isolated trusted network. Never expose this API directly to the public internet.
 
 Check which optional tools and libraries are installed:
 
@@ -132,4 +133,4 @@ reforge.py    Preserved legacy analyzer
 - Findings should include provenance and confidence; inferred behavior must not be presented as observed fact.
 - Resource limits and safe path handling are mandatory for parsers and extractors.
 
-See [Architecture](docs/ARCHITECTURE.md) and [Roadmap](docs/ROADMAP.md).
+See [Architecture](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md), [Security & Repair](docs/SECURITY_REPAIR.md), [Merge Studio](docs/MERGE_STUDIO.md), and [Product UX & Delivery](docs/DELIVERY_UX.md).
