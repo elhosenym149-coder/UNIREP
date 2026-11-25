@@ -32,6 +32,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("engines", help="List installed analysis engines")
+    doctor = sub.add_parser("doctor", help="Check optional libraries and external tools")
+    doctor.add_argument("--json", action="store_true")
     sub.add_parser("desktop", help="Launch the optional desktop interface")
     rebuild = sub.add_parser("rebuild", help="Generate a starter project from a reviewed JSON spec")
     rebuild.add_argument("spec")
@@ -65,6 +67,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "serve":
         from unirep.service.server import serve as serve_api
         serve_api(args.host, args.port, args.root or None, args.token, args.cert, args.key, args.insecure_lan)
+        return 0
+    if args.command == "doctor":
+        from unirep.doctor import collect_diagnostics, render_diagnostics
+        report = collect_diagnostics()
+        print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else render_diagnostics(report))
         return 0
     if args.command == "desktop":
         from unirep.desktop import main as desktop_main
