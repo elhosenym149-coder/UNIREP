@@ -17,6 +17,8 @@ def test_inventory_and_signatures(tmp_path):
     by_name = {r.engine: r for r in job.results}
     assert by_name["inventory"].findings["files_scanned"] == 2
     assert "Python project" in by_name["signatures"].findings["technology_hints"]
+    assert by_name["inventory"].evidence[0].kind == "observed"
+    assert by_name["signatures"].evidence[0].source == "pyproject.toml"
 
 
 def test_runner_reports_partial_failure(tmp_path):
