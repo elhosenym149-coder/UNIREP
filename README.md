@@ -16,6 +16,7 @@ Current modular foundation:
 - ZIP inspection/extraction with entry, size, path-traversal and symlink safeguards.
 - Optional Playwright-based read-only browser inspection of an explicitly authorized website, including sanitized request/response metadata.
 - Static Python AST import graphing, native PE/ELF/Mach-O header inspection, and a compatibility adapter for the original package analyzer.
+- Early Android companion source plus a GitHub Actions debug-APK build workflow.
 - JSON job reports and a command-line interface.
 - Initial automated tests and architecture/roadmap documents.
 
