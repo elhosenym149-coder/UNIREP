@@ -83,11 +83,14 @@ def safe_join(base: Path, name: str) -> Path:
     if not normalized or normalized.startswith("/") or re.match(r"^[A-Za-z]:", normalized):
         raise ValueError(f"Unsafe archive path: {name!r}")
     parts = [p for p in normalized.split("/") if p not in ("", ".")]
+    if not parts:
+        raise ValueError(f"Empty archive path: {name!r}")
     if any(p == ".." for p in parts):
         raise ValueError(f"Archive path traversal rejected: {name!r}")
     raw_base = Path(base).absolute()
-    if raw_base.is_symlink():
-        raise ValueError("Extraction destination must not be a symlink")
+    for ancestor in (raw_base, *raw_base.parents):
+        if ancestor.is_symlink():
+            raise ValueError(f"Symlink in extraction destination: {ancestor}")
     root = raw_base.resolve()
     raw_target = root.joinpath(*parts)
     if raw_target.is_symlink():
