@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from unirep import __version__
 from unirep.core.models import AnalysisJob, AnalysisTarget
@@ -42,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--root", action="append", default=[], help="Allowed local path root (repeatable)")
-    serve.add_argument("--token", default=None, help="Optional bearer token; otherwise generated at startup")
+    serve.add_argument("--token", default=os.environ.get("UNIREP_API_TOKEN"), help="Bearer token; prefer UNIREP_API_TOKEN environment variable, otherwise generated at startup")
     serve.add_argument("--cert", default=None, help="TLS certificate PEM for HTTPS LAN access")
     serve.add_argument("--key", default=None, help="TLS private key PEM for HTTPS LAN access")
     serve.add_argument("--insecure-lan", action="store_true", help="Explicitly allow unencrypted non-loopback access (development only)")
