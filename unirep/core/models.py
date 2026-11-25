@@ -30,6 +30,15 @@ class AnalysisTarget:
 
 
 @dataclass(slots=True)
+class Evidence:
+    claim: str
+    kind: str = "observed"  # observed | inferred
+    source: str | None = None
+    confidence: float | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class EngineResult:
     engine: str
     status: str
@@ -37,6 +46,7 @@ class EngineResult:
     findings: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    evidence: list[Evidence] = field(default_factory=list)
     confidence: float | None = None
     duration_seconds: float | None = None
 
