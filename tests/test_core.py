@@ -90,3 +90,20 @@ def test_job_manager_browses_only_allowed_directory_entries(tmp_path):
         assert manager.list_roots() == [str(root.resolve())]
     finally:
         manager.close()
+
+
+def test_registry_exposes_modular_engines():
+    from unirep.cli import build_registry
+    names = {item["name"] for item in build_registry().list()}
+    assert {"inventory", "signatures", "python_architecture", "web_browser", "legacy_package"} <= names
+
+
+def test_job_serialization_includes_evidence():
+    from unirep.core.models import Evidence
+    job = AnalysisJob(AnalysisTarget(".", "folder"))
+    job.results.append(EngineResult(
+        engine="test", status="ok", summary="observed",
+        evidence=[Evidence(claim="A file was found", source="x.py", confidence=1.0)]
+    ))
+    data = job.to_dict()
+    assert data["results"][0]["evidence"][0]["claim"] == "A file was found"
