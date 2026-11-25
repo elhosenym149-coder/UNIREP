@@ -22,7 +22,10 @@ def _safe_member_path(root: Path, name: str) -> Path:
         if ancestor.is_symlink():
             raise ArchiveLimitError(f"Symlink in extraction destination: {ancestor}")
     base = raw_root.resolve()
-    destination = (base / Path(*member.parts)).resolve()
+    raw_destination = base / Path(*member.parts)
+    if raw_destination.is_symlink():
+        raise ArchiveLimitError(f"Refusing to overwrite symlink: {raw_destination}")
+    destination = raw_destination.resolve()
     if destination != base and base not in destination.parents:
         raise ArchiveLimitError(f"Archive path escapes destination: {name!r}")
     # Existing symlinks in the destination chain can redirect writes.
