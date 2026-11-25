@@ -27,3 +27,13 @@ def test_legacy_unzip_rejects_zip_slip(tmp_path):
         z.writestr("../escape.txt", "unsafe")
     with pytest.raises(ValueError):
         unzip(source, tmp_path / "out")
+
+
+def test_legacy_adapter_returns_report_without_retaining_temp_files(tmp_path):
+    from unirep.core.models import AnalysisTarget
+    from unirep.engines.legacy import LegacyPackageEngine
+    source = tmp_path / "simple.txt"
+    source.write_text("hello")
+    result = LegacyPackageEngine().analyze(AnalysisTarget(str(source), "file"))
+    assert result.engine == "legacy_package"
+    assert result.findings["temporary_extraction_retained"] is False
