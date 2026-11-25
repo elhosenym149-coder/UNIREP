@@ -96,9 +96,12 @@ class StaticSecurityEngine(AnalysisEngine):
         opts = options or {}
         max_files = min(max(int(opts.get("max_files", 5000)), 1), MAX_FILES_HARD_LIMIT)
         max_source_bytes = min(max(int(opts.get("max_source_bytes", 2 << 20)), 1024), MAX_SOURCE_HARD_LIMIT)
-        root = target.path.resolve(strict=True)
-        if root.is_symlink() or (not root.is_file() and not root.is_dir()):
-            raise ValueError("Security analysis requires a regular file or directory, not a symlink")
+        requested_path = target.path
+        if requested_path.is_symlink():
+            raise ValueError("Security analysis refuses a symlink target")
+        root = requested_path.resolve(strict=True)
+        if not root.is_file() and not root.is_dir():
+            raise ValueError("Security analysis requires a regular file or directory")
         if root.is_file():
             candidates = [root] if root.suffix.lower() == ".py" else []
             base = root.parent

@@ -53,4 +53,4 @@ The output is a new repaired build, never an in-place silent rewrite of the only
 
 ## Current status
 
-This document specifies the target architecture. It does not claim that automated malware detection, component replacement or repair is implemented in the current build. Those capabilities require dedicated engines, curated rule sources, isolated execution infrastructure and extensive validation.
+The first implementation slice now exists: `security_static` performs bounded, read-only Python AST inspection for selected risky execution and deserialization patterns. It emits evidence, source locations, severity, confidence and false-positive caveats; every result remains `suspicious`, never a malware verdict. It does not inspect native code, Java/Kotlin, JavaScript, .NET or package advisories, and it does not perform repair, quarantine, dependency-impact analysis or dynamic sandboxing. The broader detection, component replacement and repair workflow remains planned and requires curated rule sources, isolated execution infrastructure and extensive validation.
