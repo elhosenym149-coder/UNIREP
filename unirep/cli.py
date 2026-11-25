@@ -13,6 +13,7 @@ from unirep.engines.signatures import SignatureEngine
 from unirep.engines.architecture import PythonArchitectureEngine
 from unirep.engines.web.browser import BrowserInspectionEngine
 from unirep.engines.legacy import LegacyPackageEngine
+from unirep.engines.binary import BinaryMetadataEngine
 
 
 def build_registry() -> EngineRegistry:
@@ -22,6 +23,7 @@ def build_registry() -> EngineRegistry:
     registry.register(PythonArchitectureEngine())
     registry.register(BrowserInspectionEngine())
     registry.register(LegacyPackageEngine())
+    registry.register(BinaryMetadataEngine())
     return registry
 
 
