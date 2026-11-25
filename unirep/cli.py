@@ -51,7 +51,9 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("web inspection requires --authorized")
         target = AnalysisTarget(value=args.url, kind="url", authorized=True)
         result = BrowserInspectionEngine().analyze(target, {"allowed_hosts": args.allow_host})
-        Path(args.out).write_text(json.dumps(result.__dict__ if hasattr(result, "__dict__") else {
+        output_path = Path(args.out).expanduser()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(result.__dict__ if hasattr(result, "__dict__") else {
             "engine": result.engine, "status": result.status, "summary": result.summary,
             "findings": result.findings, "warnings": result.warnings, "errors": result.errors,
             "confidence": result.confidence, "duration_seconds": result.duration_seconds
@@ -64,7 +66,9 @@ def main(argv: list[str] | None = None) -> int:
     kind = args.kind or ("folder" if path.is_dir() else "file")
     target = AnalysisTarget(value=str(path), kind=kind, authorized=False)
     job = AnalysisRunner(registry).run(AnalysisJob(target=target, requested_engines=args.engines or []))
-    Path(args.out).write_text(json.dumps(job.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
+    output_path = Path(args.out).expanduser()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(job.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Job {job.job_id}: {job.status.value}; {len(job.results)} engine result(s)")
     print(f"Report: {Path(args.out).resolve()}")
     return 0 if job.status.value in {"succeeded", "partial"} else 1
