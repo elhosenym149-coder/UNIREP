@@ -9,13 +9,19 @@
 - All extraction, parsing, and browser work must have resource limits and explicit authorization.
 
 ## Current modular foundation
-- `core.models`: target, job, result and lifecycle contracts.
+- `core.models`: target, job, result, evidence and lifecycle contracts.
 - `core.registry`: explicit engine registration.
 - `core.runner`: fault-isolated sequential orchestration.
 - `engines.inventory`: bounded file inventory.
 - `engines.signatures`: project manifest detection.
+- `engines.architecture`: static Python AST import graph.
+- `engines.binary`: PE, ELF and Mach-O header metadata.
 - `engines.archive`: guarded ZIP inspection and extraction.
-- `engines.web.browser`: optional read-only Playwright DOM inspection.
+- `engines.legacy`: compatibility adapter around the preserved analyzer.
+- `engines.web.browser`: optional read-only Playwright DOM and sanitized network metadata.
+- `reconstruction.generator`: reviewed-spec Python/web scaffold generation.
+- `service.server`: authenticated local/LAN control API with allowed-root browsing.
+- `desktop`: optional PySide6 front end; `apps/android`: companion client source.
 
 ## Planned engine boundaries
 - Static analysis: source, bytecode, package manifests and binary metadata.
