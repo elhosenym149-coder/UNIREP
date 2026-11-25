@@ -15,6 +15,7 @@ from unirep.engines.architecture import PythonArchitectureEngine
 from unirep.engines.web.browser import BrowserInspectionEngine
 from unirep.engines.legacy import LegacyPackageEngine
 from unirep.engines.binary import BinaryMetadataEngine
+from unirep.engines.security_static import StaticSecurityEngine
 
 
 def build_registry() -> EngineRegistry:
@@ -25,6 +26,7 @@ def build_registry() -> EngineRegistry:
     registry.register(BrowserInspectionEngine())
     registry.register(LegacyPackageEngine())
     registry.register(BinaryMetadataEngine())
+    registry.register(StaticSecurityEngine())
     return registry
 
 
