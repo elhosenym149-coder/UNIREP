@@ -56,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         output_path.write_text(json.dumps(result.__dict__ if hasattr(result, "__dict__") else {
             "engine": result.engine, "status": result.status, "summary": result.summary,
             "findings": result.findings, "warnings": result.warnings, "errors": result.errors,
+            "evidence": [{"claim": e.claim, "kind": e.kind, "source": e.source, "confidence": e.confidence, "details": e.details} for e in result.evidence],
             "confidence": result.confidence, "duration_seconds": result.duration_seconds
         }, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"Web inspection complete: {Path(args.out).resolve()}")
