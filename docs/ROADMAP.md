@@ -11,7 +11,7 @@ Status is evidence-based: a feature is complete only after its tests pass.
 | P4 | Architecture graph and evidence/provenance model | Python AST import graph and structured observed/inferred evidence records implemented; broader languages planned |
 | P5 | Controlled dynamic analysis in disposable sandboxes | Planned |
 | P6 | Reconstruction workspace, templates and regression comparisons | Planned |
-| P7 | Windows desktop packaging and Android companion/controller | Planned |
+| P7 | Windows desktop packaging and Android companion/controller | Optional PySide6 desktop UI and authenticated local/LAN API implemented; Android client and packaged installers planned |
 
 ## Acceptance gates
 1. Unit tests and static checks pass.
