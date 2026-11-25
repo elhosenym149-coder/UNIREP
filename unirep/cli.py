@@ -30,6 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("engines", help="List installed analysis engines")
+    sub.add_parser("desktop", help="Launch the optional desktop interface")
     web = sub.add_parser("web", help="Inspect an authorized website in read-only mode")
     web.add_argument("url")
     web.add_argument("--authorized", action="store_true", help="Confirm you own or are authorized to assess this site")
@@ -43,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     registry = build_registry()
+    if args.command == "desktop":
+        from unirep.desktop import main as desktop_main
+        return desktop_main([])
     if args.command == "engines":
         print(json.dumps(registry.list(), indent=2, ensure_ascii=False))
         return 0
