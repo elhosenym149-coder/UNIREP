@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 from unirep.core.engine import AnalysisEngine
-from unirep.core.models import AnalysisTarget, EngineResult
+from unirep.core.models import AnalysisTarget, EngineResult, Evidence
 
 
 def _safe_url(value: str) -> str:
@@ -94,6 +94,8 @@ class BrowserInspectionEngine(AnalysisEngine):
                 "responses": responses,
                 "network_capture_truncated": len(requests) >= 500 or len(responses) >= 500,
             },
+            evidence=[Evidence(claim="Rendered page structure and response metadata observed",
+                              source=_safe_url(page_info["url"]), confidence=0.95)],
             warnings=[
                 "Read-only DOM inspection only; no application internals or server-side code are exposed.",
                 "Cross-host requests are blocked unless their hosts are explicitly allowlisted.",
