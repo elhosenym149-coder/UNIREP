@@ -31,7 +31,18 @@
 - Mobile analysis: APK/AAB/IPA package structure, resources and manifests.
 - AI model analysis: architecture metadata and tensor inventories; never load untrusted weights into an execution runtime by default.
 - Architecture graph: modules, interfaces, dependencies, data flows and evidence provenance.
+- Security intelligence: correlate signatures, static findings, provenance and optional sandbox telemetry; distinguish confirmed threats from suspicious or unknown behavior.
+- Repair and trusted rebuild: snapshot originals, map dependency impact, propose reversible quarantine/repair, and rebuild core components only against documented contracts and tests.
+- Merge Studio: compare application capabilities, dependencies, permissions and licenses; compose selected capabilities through adapters and explicit interfaces.
+- Product design system: editable product identity, logo, icons, themes, navigation and screen layouts with previews.
+- Build and delivery: produce platform-specific portable/installable artifacts with hashes, SBOM, provenance, validation and explicit user-controlled installation.
 - Reconstruction: generate a new project from verified specifications, then run tests and visual/behavioral comparisons.
+
+## Security and repair boundaries
+Malware findings are evidence-led and confidence-scored. No destructive action is automatic. Original inputs are preserved; quarantine and repair require approval and a rollback path. Core components must be restored from trusted sources or rebuilt to a documented interface and pass compatibility/security tests. Unknown components are not silently replaced.
+
+## Merge and product delivery boundaries
+Merge is capability-level composition through documented adapters/contracts, not arbitrary binary concatenation. License, permission, dependency and platform conflicts must be surfaced before generation. Installation is always user-initiated and subject to operating-system signing and permission rules.
 
 ## Reconstruction limits
 A compiled or hosted product cannot generally be reconstructed byte-for-byte. Source maps, symbols, debug builds, exported data and authorized APIs can improve fidelity. Server-side logic, model weights, private services and protected assets are not assumed accessible.
