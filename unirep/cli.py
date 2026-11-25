@@ -11,6 +11,7 @@ from unirep.core.runner import AnalysisRunner
 from unirep.engines.inventory import InventoryEngine
 from unirep.engines.signatures import SignatureEngine
 from unirep.engines.architecture import PythonArchitectureEngine
+from unirep.engines.web.browser import BrowserInspectionEngine
 
 
 def build_registry() -> EngineRegistry:
@@ -18,6 +19,7 @@ def build_registry() -> EngineRegistry:
     registry.register(InventoryEngine())
     registry.register(SignatureEngine())
     registry.register(PythonArchitectureEngine())
+    registry.register(BrowserInspectionEngine())
     return registry
 
 
@@ -26,6 +28,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("engines", help="List installed analysis engines")
+    web = sub.add_parser("web", help="Inspect an authorized website in read-only mode")
+    web.add_argument("url")
+    web.add_argument("--authorized", action="store_true", help="Confirm you own or are authorized to assess this site")
+    web.add_argument("--allow-host", action="append", default=[], help="Allow an additional host for page resources")
+    web.add_argument("--out", default="unirep-web-report.json")
     analyze = sub.add_parser("analyze", help="Analyze a local file or folder (read-only)")
     analyze.add_argument("target")
     analyze.add_argument("--kind", choices=["file", "folder"], default=None)
@@ -36,6 +43,18 @@ def main(argv: list[str] | None = None) -> int:
     registry = build_registry()
     if args.command == "engines":
         print(json.dumps(registry.list(), indent=2, ensure_ascii=False))
+        return 0
+    if args.command == "web":
+        if not args.authorized:
+            parser.error("web inspection requires --authorized")
+        target = AnalysisTarget(value=args.url, kind="url", authorized=True)
+        result = BrowserInspectionEngine().analyze(target, {"allowed_hosts": args.allow_host})
+        Path(args.out).write_text(json.dumps(result.__dict__ if hasattr(result, "__dict__") else {
+            "engine": result.engine, "status": result.status, "summary": result.summary,
+            "findings": result.findings, "warnings": result.warnings, "errors": result.errors,
+            "confidence": result.confidence, "duration_seconds": result.duration_seconds
+        }, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Web inspection complete: {Path(args.out).resolve()}")
         return 0
     path = Path(args.target).expanduser()
     if not path.exists():
