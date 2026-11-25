@@ -111,7 +111,7 @@ python -m playwright install chromium
 
 Browser inspection is available through the Python engine API and requires the caller to explicitly mark the target as authorized. It does not submit forms or attempt to evade site controls.
 
-Android companion source is under `apps/android`. Build and connection instructions are in [apps/android/README.md](apps/android/README.md).
+Android companion source is under `apps/android`. Build and connection instructions are in [apps/android/README.md](apps/android/README.md). The local control API is documented in [docs/API.md](docs/API.md).
 
 ## Repository layout
 
