@@ -74,3 +74,19 @@ def test_job_manager_restricts_targets_to_configured_roots(tmp_path):
 def test_desktop_module_does_not_require_qt_at_import_time():
     import unirep.desktop
     assert callable(unirep.desktop.main)
+
+
+def test_job_manager_browses_only_allowed_directory_entries(tmp_path):
+    from unirep.service.server import JobManager
+    root = tmp_path / "workspace"
+    root.mkdir()
+    (root / "project.txt").write_text("ok")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    manager = JobManager([root])
+    try:
+        entries = manager.browse(str(root))
+        assert [x["name"] for x in entries] == ["project.txt"]
+        assert manager.list_roots() == [str(root.resolve())]
+    finally:
+        manager.close()
