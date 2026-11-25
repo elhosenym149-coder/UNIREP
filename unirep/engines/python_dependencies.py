@@ -105,6 +105,8 @@ def _parse_lockfile(raw: bytes, filename: str, manifest: str) -> tuple[list[dict
             warnings.append(f"Lockfile package without a name or exact version in {manifest}")
             continue
         version_text = str(version).strip()
+        if version_text.startswith("=="):
+            version_text = version_text[2:].strip()
         if not version_text:
             continue
         markers = item.get("markers") or item.get("marker")
