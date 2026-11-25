@@ -38,6 +38,7 @@ class PythonArchitectureEngine(AnalysisEngine):
             raise ValueError("Python architecture analysis requires a directory")
         opts = options or {}
         max_files = min(max(int(opts.get("max_files", 5000)), 1), 50000)
+        max_source_bytes = min(max(int(opts.get("max_source_bytes", 5 << 20)), 1024), 50 << 20)
         paths: list[Path] = []
         for path in root.rglob("*.py"):
             rel = path.relative_to(root)
@@ -59,6 +60,9 @@ class PythonArchitectureEngine(AnalysisEngine):
 
         for source_module, path in module_to_path.items():
             try:
+                if path.stat().st_size > max_source_bytes:
+                    parse_errors.append(f"{path.relative_to(root)}: skipped source larger than {max_source_bytes} bytes")
+                    continue
                 source = path.read_text(encoding="utf-8")
                 tree = ast.parse(source, filename=str(path))
             except (OSError, UnicodeError, SyntaxError) as exc:
@@ -88,7 +92,7 @@ class PythonArchitectureEngine(AnalysisEngine):
                             third_party.add(root_name)
                         unresolved.add(imported)
 
-        warnings = [f"Could not parse {len(parse_errors)} Python file(s)."] if parse_errors else []
+        warnings = [f"Could not parse or safely inspect {len(parse_errors)} Python file(s)."] if parse_errors else []
         if len(paths) >= max_files:
             warnings.append(f"Scan limit max_files={max_files} reached; graph may be incomplete.")
         return EngineResult(
