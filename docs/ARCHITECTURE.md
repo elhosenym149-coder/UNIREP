@@ -16,7 +16,7 @@
 - `engines.signatures`: project manifest detection.
 - `engines.architecture`: static Python AST import graph.
 - `engines.binary`: PE, ELF and Mach-O header metadata.
-- `engines.security_static`: bounded, read-only Python AST indicators for dynamic execution, shell invocation and unsafe deserialization; findings remain suspicious indicators, not malware verdicts.
+- `engines.security_static`: bounded, read-only Python AST indicators for dynamic execution, shell invocation and unsafe deserialization, correlated with the existing Python import graph to show static dependants; findings remain suspicious indicators, not malware verdicts.
 - `engines.archive`: guarded ZIP inspection and extraction.
 - `engines.legacy`: compatibility adapter around the preserved analyzer.
 - `engines.web.browser`: optional read-only Playwright DOM and sanitized network metadata.
