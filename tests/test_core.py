@@ -95,7 +95,7 @@ def test_job_manager_browses_only_allowed_directory_entries(tmp_path):
 def test_registry_exposes_modular_engines():
     from unirep.cli import build_registry
     names = {item["name"] for item in build_registry().list()}
-    assert {"inventory", "signatures", "python_architecture", "web_browser", "legacy_package", "security_static"} <= names
+    assert {"inventory", "signatures", "python_architecture", "web_browser", "legacy_package", "security_static", "python_dependencies"} <= names
 
 
 def test_job_serialization_includes_evidence():
