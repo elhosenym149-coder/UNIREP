@@ -12,7 +12,7 @@ Status is evidence-based: a feature is complete only after its tests pass.
 | P5 | Controlled dynamic analysis in disposable sandboxes | Planned |
 | P6 | Reconstruction workspace, templates and regression comparisons | Safe Python/web scaffold generator from reviewed JSON specifications implemented; behavioral reconstruction and comparison planned |
 | P7 | Windows desktop packaging and Android companion/controller | Windows portable build and Android debug APK build verified in CI; release signing, device testing, installer and pairing polish remain |
-| P8 | Evidence-led malware analysis, dependency impact and reversible repair/trusted component rebuild | Architecture specified; implementation and validation planned |
+| P8 | Evidence-led malware analysis, dependency impact and reversible repair/trusted component rebuild | Phase 1 implemented: bounded read-only Python AST indicators with evidence, severity, confidence and false-positive caveats; CI validation pending. Dependency impact, broader languages, threat-feed correlation and repair remain planned |
 | P9 | Multi-app capability comparison, feature selection, conflict resolution and Merge Studio | Architecture specified; implementation planned |
 | P10 | Full visual design/branding editor and platform-specific packaging/install handoff | UX and delivery requirements specified; implementation planned |
 

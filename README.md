@@ -15,10 +15,10 @@ Current modular foundation:
 - Read-only filesystem inventory and project-manifest detection.
 - ZIP inspection/extraction with entry, size, path-traversal and symlink safeguards.
 - Optional Playwright-based read-only browser inspection of an explicitly authorized website, including sanitized request/response metadata.
-- Static Python AST import graphing, native PE/ELF/Mach-O header inspection, and a compatibility adapter for the original package analyzer.
+- Static Python AST import graphing, a read-only Python security-indicator engine (dynamic execution, shell invocation and unsafe deserialization patterns), native PE/ELF/Mach-O header inspection, and a compatibility adapter for the original package analyzer.
 - Early Android companion source plus a GitHub Actions debug-APK build workflow.
 - JSON job reports and a command-line interface.
-- Design specifications for evidence-led malware analysis and reversible repair, multi-application Merge Studio, product branding, and platform-specific build/install handoff (planned capabilities, not yet implemented).
+- Initial P8 security-analysis slice implemented: suspicious indicators include source location, severity, confidence and false-positive caveats. This is not a malware verdict and performs no remediation. Dependency impact, broader-language coverage, trusted repair, Merge Studio, branding and release installers remain planned.
 - Initial automated tests and architecture/roadmap documents.
 
 This is an early development branch, not a production-ready universal decompiler or one-click clone tool.
@@ -89,7 +89,7 @@ List engines:
 unirep engines
 ```
 
-Analyze a local folder (read-only):
+Analyze a local folder (read-only; includes the `security_static` engine):
 
 ```bash
 unirep analyze ./path/to/project --out analysis.json
