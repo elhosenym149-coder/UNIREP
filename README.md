@@ -61,7 +61,7 @@ mkdir workspace
 unirep serve --root ./workspace
 ```
 
-The server prints a bearer token at startup. By default it listens only on `127.0.0.1`; to connect a phone on the same trusted Wi-Fi network, explicitly bind to your computer's LAN interface (for example `--host 0.0.0.0`), use a strong private token, and keep the port firewalled. The API is not designed for direct internet exposure and does not provide TLS.
+The server prints a generated bearer token at startup. For a fixed token, set `UNIREP_API_TOKEN` in the environment rather than putting secrets in shell history or command-line arguments. By default it listens only on `127.0.0.1`; to connect a phone on the same trusted Wi-Fi network, explicitly bind to your computer's LAN interface (for example `--host 0.0.0.0`), use a strong private token, and keep the port firewalled. The API is not designed for direct internet exposure and does not provide TLS.
 
 Check which optional tools and libraries are installed:
 
