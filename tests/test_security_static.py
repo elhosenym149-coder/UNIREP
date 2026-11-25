@@ -77,7 +77,7 @@ def test_static_security_hashes_evidence_and_detects_encoded_execution(tmp_path)
     path = tmp_path / "loader.py"
     path.write_text(source, encoding="utf-8")
     import hashlib
-    expected = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    expected = hashlib.sha256(path.read_bytes()).hexdigest()
     result = StaticSecurityEngine().analyze(AnalysisTarget(str(tmp_path), "folder"))
     findings = result.findings["findings"]
     encoded = next(item for item in findings if item["rule_id"] == "python.encoded-execution")
