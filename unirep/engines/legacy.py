@@ -28,6 +28,8 @@ class LegacyPackageEngine(AnalysisEngine):
             findings["temporary_extraction_retained"] = False
             findings["report_path"] = None
         warnings = list(facts.get("warnings", [])) + list(facts.get("notes", []))
+        if facts.get("unpacked_files") or facts.get("pyinstaller"):
+            warnings.append("Extracted package files were analyzed in a temporary workspace and discarded; this adapter returns metadata only.")
         return EngineResult(
             engine=self.name,
             status="partial" if warnings else "ok",
