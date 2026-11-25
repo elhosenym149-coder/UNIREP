@@ -28,7 +28,7 @@ def load_spec(path: Path) -> dict[str, Any]:
     features = data.get("features", [])
     if not isinstance(name, str):
         raise ValueError("Spec requires a string 'name'")
-    _slug(name)
+    slug = _slug(name)
     if platform not in {"python", "web"}:
         raise ValueError("platform must be 'python' or 'web' for this generator version")
     if not isinstance(description, str) or len(description) > 1000:
@@ -37,7 +37,7 @@ def load_spec(path: Path) -> dict[str, Any]:
         isinstance(x, str) and 1 <= len(x) <= 200 for x in features
     ):
         raise ValueError("features must be a list of up to 40 strings (1–200 characters each)")
-    return {"name": name, "slug": _slug(name), "platform": platform,
+    return {"name": name, "slug": slug, "platform": platform,
             "description": description, "features": features}
 
 
@@ -53,27 +53,31 @@ def _write_new(root: Path, relative: str, content: str) -> None:
 def generate_project(spec_path: Path, output: Path) -> dict[str, Any]:
     spec = load_spec(spec_path)
     output = Path(output).expanduser().absolute()
+    if output.is_symlink():
+        raise ValueError("Output directory must not be a symlink")
     if output.exists() and (not output.is_dir() or any(output.iterdir())):
         raise FileExistsError("Output must be a new or empty directory; existing files will not be overwritten")
     output.mkdir(parents=True, exist_ok=True)
     features_md = "\n".join(f"- {x}" for x in spec["features"]) or "- To be specified"
     if spec["platform"] == "python":
+        toml_description = json.dumps(spec["description"])
+        package = spec["slug"]
         files = {
             "pyproject.toml": f'''[build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "{spec["slug"].replace("_", "-")}"
+name = "{package.replace("_", "-")}"
 version = "0.1.0"
-description = "{spec["description"].replace(chr(34), "'")}"
+description = {toml_description}
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 ''',
-            f"src/{spec['slug']}/__init__.py": '"""Generated application package."""\n',
-            f"src/{spec['slug']}/main.py": '''def main() -> int:
+            f"{package}/__init__.py": '"""Generated application package."""\n',
+            f"{package}/main.py": '''def main() -> int:
     print("Application scaffold is ready. Implement verified requirements here.")
     return 0
 
@@ -81,7 +85,7 @@ testpaths = ["tests"]
 if __name__ == "__main__":
     raise SystemExit(main())
 ''',
-            "tests/test_smoke.py": f'''from {spec["slug"]}.main import main
+            "tests/test_smoke.py": f'''from {package}.main import main
 
 
 def test_main_returns_success():
