@@ -31,6 +31,11 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("engines", help="List installed analysis engines")
     sub.add_parser("desktop", help="Launch the optional desktop interface")
+    serve = sub.add_parser("serve", help="Start authenticated local/LAN control API")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--root", action="append", default=[], help="Allowed local path root (repeatable)")
+    serve.add_argument("--token", default=None, help="Optional bearer token; otherwise generated at startup")
     web = sub.add_parser("web", help="Inspect an authorized website in read-only mode")
     web.add_argument("url")
     web.add_argument("--authorized", action="store_true", help="Confirm you own or are authorized to assess this site")
@@ -44,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     registry = build_registry()
+    if args.command == "serve":
+        from unirep.service.server import serve as serve_api
+        serve_api(args.host, args.port, args.root or None, args.token)
+        return 0
     if args.command == "desktop":
         from unirep.desktop import main as desktop_main
         return desktop_main([])
