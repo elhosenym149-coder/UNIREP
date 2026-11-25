@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unirep-reforge"
+version = "0.2.0"
+description = "Modular, permission-based software analysis and reconstruction workspace"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary - see repository license status" }
+authors = [{ name = "UNIREP contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+web = ["playwright>=1.45"]
+test = ["pytest>=8", "pytest-cov>=5"]
+
+[project.scripts]
+unirep = "unirep.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["unirep*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
