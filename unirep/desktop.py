@@ -13,7 +13,7 @@ from unirep.cli import build_registry
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        from PySide6.QtCore import QObject, QThread, Signal, Slot
+        from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
         from PySide6.QtWidgets import (
             QApplication, QCheckBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit,
             QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
@@ -81,8 +81,8 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 item = QListWidgetItem(f"{engine['name']} — {engine['description']}")
                 item.setData(256, engine["name"])
-                item.setFlags(item.flags() | 16)
-                item.setCheckState(2)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Checked)
                 self.engine_list.addItem(item)
             layout.addWidget(self.engine_list)
 
@@ -141,7 +141,7 @@ def main(argv: list[str] | None = None) -> int:
             engines = [
                 self.engine_list.item(i).data(256)
                 for i in range(self.engine_list.count())
-                if self.engine_list.item(i).checkState() == 2
+                if self.engine_list.item(i).checkState() == Qt.CheckState.Checked
             ]
             self.run_button.setEnabled(False)
             self.status.setText("Analyzing…")
